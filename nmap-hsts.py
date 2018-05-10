@@ -52,7 +52,7 @@ def request_service(hostname, port, is_ssl):
         url = "https://{}:{}/".format(hostname, port)
     else:
         url = "http://{}:{}/".format(hostname, port)
-    print("Requesting {}...".format(url))
+    #print("Requesting {}...".format(url))
 
     try: 
         r = requests.get(url, proxies=proxies, verify=False, timeout=3, allow_redirects=False)
@@ -73,18 +73,25 @@ if __name__ == "__main__":
         sys.exit(1)
 
     hosts = parse_services(sys.argv[1])
+    vulnerable_urls = []
+    print("Sending requests...")
     for host in hosts:
         for port in host.http_ports:
             for hostname in host.hostnames:
                 r = request_service(hostname, port, False)
                 if r and not check_hsts(r):
-                    print("http://{}:{}/ does not set a Strict-Transport Security Header!".format(hostname, port))
                     #TODO: figure out how to reconstruct the pretty, ordered headers that burp's response tab shows
+                    vulnerable_urls.append("http://{}:{}/".format(hostname, port))
+                    
         for port in host.https_ports:
             for hostname in host.hostnames:
                 r = request_service(hostname, port, True)
                 if r and not check_hsts(r):
-                    print("https://{}:{}/ does not set a Strict-Transport Security Header!".format(hostname, port))
                     #TODO: figure out how to reconstruct the pretty, ordered headers that burp's response tab shows
-
-    
+                    vulnerable_urls.append("https://{}:{}/".format(hostname, port))
+    print()
+    print()         
+    print("===== Vulnerable URLs =====")
+    print()
+    for url in vulnerable_urls:
+        print(url)
